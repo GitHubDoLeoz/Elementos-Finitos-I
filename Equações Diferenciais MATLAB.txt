@@ -1,0 +1,3 @@
+Calculus - https://www.mathworks.com/help/symbolic/calculus.html
+Numerical Integration and Differential Equations - https://www.mathworks.com/help/matlab/numerical-integration-and-differential-equations.html
+Partial Differential Equation Toolbox - Partial Differential Equation Toolbox
