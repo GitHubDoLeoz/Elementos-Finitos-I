@@ -1,17 +1,17 @@
 clear all; close all; clc;
 
 % Data set
-L = 1.0;                  % bar length [m]
+L = 3.0;                  % bar length [m]
 nx = 100;                 % number of x-points
 x = linspace(0, L, nx)';  % x coordinates
 h = L / (nx-1);             % intervals length
-A = pi * (0.015^2);       % section area [m^2]
+A = 0.001;                % section area [m^2]
 E = 210e9;                % Young modulus [Pa]
 % function types: con, lin, par, sin, cos, exp
-type = 'lin';
-q0 = 1e3;                 % Distributed Load [N/m]
+type = 'con';
+q0 = 2e3;                 % Distributed Load [N/m]
 ua = 0;                   % left displacement [m]
-ub = 5.7825e-6;               % right displacement [m]
+ub = 0;                   % right displacement [m]
 
 % Load definitions
 y = x/L;                  % normalized position vector
@@ -64,8 +64,15 @@ c1 = (ub - upL - c2)/L;
 uana = up + c1*x+c2;
 duana = dup + c1;
 
+figure;
 subplot(1,1,1), plot(x, uana, 'r', 'LineWidth', 1.5); grid on;
-title('Campo de deslocamento para ua = 0 e ub = $\overline{ub}$ = 5.7825e-6m', 'Interpreter', 'latex');
+title('Campo de deslocamento para ua = 0 e ub = $\overline{ub}$ = 0m', 'Interpreter', 'latex');
+xlabel('Posição [m]')
+ylabel('Deslocamentos [m]')
+legend('Deslocamento u(x)')
+
+subplot(2,1,1), plot(x, duana, 'r', 'LineWidth', 1.5); grid on;
+title('Deformação para ua = 0 e ub = $\overline{ub}$ = 0m', 'Interpreter', 'latex');
 xlabel('Posição [m]')
 ylabel('Deslocamentos [m]')
 legend('Deslocamento u(x)')

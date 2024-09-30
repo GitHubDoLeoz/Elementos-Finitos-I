@@ -60,8 +60,4 @@ if dimension==2            %For 2D plots
             disp('Unknown method in PlotMalha.')
     end
     end
-  end
-    
-
-
-
+end

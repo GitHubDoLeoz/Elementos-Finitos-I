@@ -1,7 +1,9 @@
-close all; clear all; clc;
+close all;
+clear all;
+clc;
 
 %% Entrada de dados
-L = 2.0; % comprimento total da Barra
+L = 2; % comprimento total da Barra
 E = 200e9; % módulo de elasticidade
 A = pi * (0.01^2); % área
 po = 3000; % carga distribuída constante
@@ -17,15 +19,15 @@ figure;
 % Loop para cada valor de nel
 for nel_idx = 1:length(nels)
     nel = nels(nel_idx);
-    nnos = nel + 1;
-    he = L / nel;
-    xn = linspace(0, L, nnos);
-    inci = [(1:nel)' (2:nnos)'];
+    nnos = nel + 1;  % Número de nós
+    he = L / nel;     % Tamanho de cada elemento
+    xn = linspace(0, L, nnos);  % Coordenadas dos nós
+    inci = [(1:nel)' (2:nnos)'];   % Incidências dos elementos
 
     %% Montagem da matriz de rigidez
     Kg = zeros(nnos);
     Fg = zeros(nnos, 1);
-    ke = (E * A / he) * [1 -1; -1 1];
+    ke = (E*A / he) * [1 -1; -1 1];
     fe = (po * he / 2) * [1; 1];
 
     for e = 1:nel
@@ -38,8 +40,7 @@ for nel_idx = 1:length(nels)
     uh(freedofs, 1) = Kg(freedofs, freedofs) \ Fg(freedofs, 1);
     
     %% Cálculo da solução analítica
-    num_points = 1000;
-    x = linspace(0, L, num_points);
+    x = linspace(0, L, 1000);
     u = (po / (2 * E * A)) * (2 * L - x) .* x;
 
     %% Gráficos - Deslocamento numérico e analítico
@@ -74,7 +75,6 @@ end
 
 % Exibir normas euclidianas dos erros
 disp('Normas Euclidianas dos Erros:');
-
 for nel_idx = 1:length(nels)
     fprintf('Para %d elementos: %.4e\n', nels(nel_idx), normas_euclidianas(nel_idx));
 end
@@ -85,10 +85,11 @@ loglog(nels, normas_euclidianas, 'o-m', 'LineWidth', 1.5);
 xlabel('Número de Elementos'); ylabel('Norma Euclidiana dos Erros');
 title('Análise de Convergência');
 grid on;
-hold off;
 
+% Adicionar texto com os valores dos erros nas bolinhas
 for nel_idx = 1:length(nels)
     text(nels(nel_idx), normas_euclidianas(nel_idx), ...
-        sprintf('%.3e', normas_euclidianas(nel_idx)), ...
+        sprintf('%.4e', normas_euclidianas(nel_idx)), ...
         'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'left');
 end
+hold off;

@@ -1,0 +1,67 @@
+close all
+clear all
+clc
+
+% Parâmetros
+L = 1;           % Comprimento da barra
+E = 210e9;        % Módulo de Young (Pa)
+A = 0.25*pi*(0.03^2);         % Área da seção transversal (m^2)
+f0 = 0;           % Carga distribuída no x=0 (N/m)
+fL = 1000;        % Carga distribuída no x=L (N/m)
+n_elements = 5;  % Número de elementos
+ub = 3e-7;      % Deslocamento prescrito no ponto L
+
+% Parâmetros derivados
+n_nodes = n_elements + 1;
+dx = L / n_elements;
+
+% Matriz de rigidez e vetor de carga
+K = zeros(n_nodes, n_nodes);
+F = zeros(n_nodes, 1);
+
+% Montagem da matriz de rigidez global e vetor de carga
+for i = 1:n_elements
+    x1 = (i-1)*dx;
+    x2 = i*dx;
+
+    % Matriz de rigidez do elemento (2x2)
+    k_local = E*A/dx * [1 -1; -1 1];
+
+    % Função de carga distribuída no elemento
+    f1 = (fL - f0)/L * x1 + f0;
+    f2 = (fL - f0)/L * x2 + f0;
+
+    % Vetor de carga do elemento (2x1)
+    f_local = dx/6 * [2*f1 + f2; f1 + 2*f2];
+
+    % Montagem na matriz global
+    K(i:i+1, i:i+1) = K(i:i+1, i:i+1) + k_local;
+    F(i:i+1) = F(i:i+1) + f_local;
+end
+
+% Aplicar as condições de contorno u(0) = 0 e u(L) = ub
+K_reduced = K(2:end-1, 2:end-1);  % Remover a primeira e última linhas/colunas para u(0)=0 e u(L)=ub
+F_reduced = F(2:end-1) - K(2:end-1, end) * ub;  % Ajustar o vetor de força para o deslocamento ub
+
+% Resolver o sistema de equações Ku = F
+U_reduced = K_reduced \ F_reduced;
+
+% Adicionar as condições de contorno ao vetor de deslocamento
+U = [0; U_reduced; ub];  % Incluir u(0)=0 no início e u(L)=ub no fim
+
+% Solução analítica para o deslocamento
+x_vals = linspace(0, L, 100);
+u_analytical = (-fL / (6 * E * A * L)) * (x_vals.^3) + (fL*L)*x_vals/(6*E*A)+3e-7*x_vals;
+
+% Plotagem dos resultados: Solução FEM e Solução Analítica
+figure;
+hold on;
+plot(linspace(0, L, n_nodes), U, 'o-', 'LineWidth', 2);
+plot(x_vals, u_analytical, '--', 'LineWidth', 2);
+legend('Solução FEM', 'Solução Analítica');
+xlabel('Posição ao longo da barra (m)');
+ylabel('Deslocamento (m)');
+title('Comparação entre Solução FEM e Solução Analítica');
+grid on;
+hold off;
+
