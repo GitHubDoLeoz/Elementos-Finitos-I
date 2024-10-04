@@ -1,11 +1,11 @@
 % Entradas
-L = 2.0;                % Comprimento da barra [m]
+L = 3.0;                % Comprimento da barra [m]
 nx = 100;               % Número de pontos em x
 x = linspace(0, L, nx); % Coordenadas x
 h = L / (nx - 1);       % Comprimento dos intervalos
-A = 0.01;               % Área da seção [m^2]
-E = 210e6;              % Módulo de Young [Pa]
-q0 = 1e3;               % Carga distribuída [N/m]
+A = 0.001;               % Área da seção [m^2]
+E = 210e9;              % Módulo de Young [Pa]
+q0 = 2e3;               % Carga distribuída [N/m]
 ua = 0;                 % Deslocamento à esquerda [m]
 ub = 0;                 % Deslocamento à direita [m]
 

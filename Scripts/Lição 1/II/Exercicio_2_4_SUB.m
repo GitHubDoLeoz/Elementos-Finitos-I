@@ -13,7 +13,7 @@ nels = [5, 10, 20, 40];
 
 % Função para calcular a norma euclidiana dos erros
 normas_euclidianas = zeros(length(nels), 1);
-norma_euclidiana_erro = @(e, L) sqrt(trapz(linspace(0, L, length(e)), e.^2));
+norma_euclidiana_erro = @(e, x) sqrt(trapz(x, e.^2));  % Corrigido para aceitar x como vetor
 
 figure;
 
@@ -46,7 +46,7 @@ for nel_idx = 1:length(nels)
         f2 = Po * (x2 / L);
         
         % Calcular força nodal exata através da integração da carga distribuída
-        fe = (h / 6) * [f1 + 2*f2; 2*f1 + f2];
+        fe = (h / 6) * [2*f1 + f2; f1 + 2*f2];
         F(no1) = F(no1) + fe(1); 
         F(no2) = F(no2) + fe(2);
     end
@@ -57,23 +57,23 @@ for nel_idx = 1:length(nels)
     uh(freedofs, 1) = K(freedofs, freedofs) \ F(freedofs, 1);
 
     % Solução analítica
-    x = linspace(0, L, 1000);
-    u = (F / (E*A)) * x + (po / (2*E*A)) * (2*L-x) .* x;
+    x = linspace(0, L, 1000);  % Mais pontos para a solução analítica
+    u_exact = (Po / (6*E*A*L)) * x .* (3*L^2 - x.^2);  % Solução analítica exata
 
     %% Cálculo dos erros
-    uh_interp = interp1(coord, uh, x, 'linear', 'extrap');
-    erro_percentual = abs((u - uh_interp) ./ u) * 100;
-    erro_absoluto = abs(u - uh_interp);
+    uh_interp = interp1(coord, uh, x);  % Interpolar deslocamentos numéricos nos pontos de x
+    erro_percentual = 100 * abs((u_exact - uh_interp) ./ u_exact);  % Erro percentual
+    erro_absoluto = abs(u_exact - uh_interp);  % Erro absoluto
 
     % Calcular norma euclidiana dos erros
-    normas_euclidianas(nel_idx) = norma_euclidiana_erro(u - uh_interp, L);
+    normas_euclidianas(nel_idx) = norma_euclidiana_erro(u_exact - uh_interp, x);  % Passar x como vetor
 
     % Exibir a norma euclidiana dos erros
     fprintf('Norma L2 dos erros para %d elementos: %.10e m\n', nel, normas_euclidianas(nel_idx));
 
     %% Gráficos - Deslocamento numérico e analítico
     subplot(length(nels), 3, 3*nel_idx-2)
-    plot(coord, uh, 'o-k', x, u, 'r');
+    plot(coord, uh, 'o-k', x, u_exact, 'r');
     grid on; xlabel('Posição x [m]'); ylabel('Deslocamento [m]');
     title(sprintf('%d elementos', nel));
     if nel_idx == 1

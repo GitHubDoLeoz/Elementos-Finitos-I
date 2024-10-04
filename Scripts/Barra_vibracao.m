@@ -20,7 +20,7 @@ Tgeo = [(10e-3)^2 ((10e-3)^4)/12 ((10e-3)^4)/12 ;
 nnos = nel+1;
 h = L/nel;
 coord = [0:h:L];
-% Inci = [nTmat nTgeo no1 no2]
+% Inci = [nTmat nTgeo nó1 nó2]
 inci = [ones(nel, 1) ones(nel, 1) [1:nnos-1]' [2:nnos]'];
 
 ke = zeros(2,2);
