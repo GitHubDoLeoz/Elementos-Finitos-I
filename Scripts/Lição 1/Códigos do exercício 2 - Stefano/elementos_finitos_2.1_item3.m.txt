@@ -1,0 +1,97 @@
+%**************************************************
+% Barracarga Constante - Comparação de Soluções Numéricas e Analíticas
+% 2.1 Item 3
+% EA*u'' = -po
+% u(0) = 0
+% du(L)/dx = F/EA
+%
+% Solucao Analitica u(x) = Fx/EA + (p0/2EA)(2L-x)x
+% Forca de Reacao R(0) = -(poL+F)
+%
+% Malha de Elementos Finitos com diferentes discretizações
+%
+% 1---2---3---4... node number
+% 1 2 3 element number
+%
+% R. Pavanello
+% www.fem.unicamp.br/~ltm
+% outubro 2021
+%**************************************************
+
+close all
+clear all
+clc
+
+%% Entrada de dados
+
+L = 1; % comprimento total da Barra
+E = 210e9; % modulo de elasticidade
+A = 0.25*pi*(30e-3)^2; % area
+F = 0; % carga pontual na extremidade direita x=L
+po = 1000; % carga distribuida constante
+
+% Diferentes discretizações
+elementos = [5, 10, 20, 40];
+
+%% Loop sobre diferentes discretizações
+for i = 1:length(elementos)
+    nel = elementos(i); % numero de elementos
+    nnos = nel + 1; % numero de nos
+    he = L / nel; % comprimento do elemento
+    xn = 0:he:L; % coordenadas nos
+    inci = [[1:nnos-1]' [2:nnos]']; % formacao dos elementos
+
+    %% Montagem da matriz de Rigidez
+    Kg = zeros(nnos);
+    uh = zeros(nnos, 1);
+    Fg = zeros(nnos, 1);
+
+    ke = (E*A/he) * [1 -1; -1 1]; % Rigidez do elemento
+    fe = (po*he/2) * [1; 1]; % Carga nodal eqv. > po
+
+    for e = 1:nel
+        Kg(inci(e,:), inci(e,:)) = Kg(inci(e,:), inci(e,:)) + ke;
+        Fg(inci(e,:), 1) = Fg(inci(e,:), 1) + fe;
+    end
+    Fg(end, 1) = Fg(end, 1) + F; % carga Pontual no no da Direita
+    freedofs = 2:nnos; % aplicar as condicoes de contorno
+    uh(freedofs, 1) = Kg(freedofs, freedofs) \ Fg(freedofs, 1); % calculo da resposta
+
+    %% pos processamento
+    % calculo das forcas internas
+    for e = 1:nel
+        NxEl(e) = E*A/he * [-1 1] * uh(inci(e,:));
+    end
+
+    %% calculo da solucao analitica
+    x = 0:he/10:L;
+    u = (F / (E*A)) * x + (po / (2*E*A)) * (2*L-x) .* x;
+    Nx = F + po * (L-x);
+
+    %% graficos
+    figure(1);
+    subplot(2,1,1);
+    plot(xn, uh(:,1), '-o', 'DisplayName', ['Numerical (' num2str(nel) ' elements)']); hold on;
+    xlabel('Posicao x [m]');
+    ylabel('Deslocamento u(x) [m]');
+    grid on;
+
+    subplot(2,1,2);
+    plot(x, Nx, 'r-', 'DisplayName', ['Analytic (' num2str(nel) ' elements)']);
+    bar((xn(2:nel+1)+xn(1:nel))/2, NxEl(1:nel), 1); hold on;
+    xlabel('Posicao x [m]');
+    ylabel('Normal Load Nx [N]');
+    grid on;
+end
+
+%% Finalizando os gráficos
+subplot(2,1,1);
+plot(x, u, 'r-', 'DisplayName', 'Analytic Solution');
+legend('show');
+hold off;
+
+subplot(2,1,2);
+axis([0, L, -1.5*abs(min(Nx)), 1.5*abs(max(Nx))]);
+legend('show');
+hold off;
+
