@@ -1,7 +1,9 @@
-% Parâmetros
+close all; clear all;
+
+%% Entrada de dados
 E = 210e9;  % Módulo de elasticidade (Pa)
-A = 0.001;  % Área da seção transversal (m^2)
-Po = 2000;  % Carga distribuída (N/m)
+A0 = 0.001;  % Área da seção transversal (m^2)
+p0 = 2000;  % Carga distribuída (N/m)
 L = 3.0;    % Comprimento total da barra (m)
 nx = 100;   % Número de pontos para discretização em x
 
@@ -12,10 +14,8 @@ ub = 0;                   % Deslocamento na extremidade direita [m]
 
 % 1. Solução Analítica
 % Solução particular para u(x) e sua derivada
-up = (Po*L^2 / (4*A0*E)) * ((3 - (2*x)/L) - 3*log(3 - (2*x)/L)) ...
-    - ((3*p0/2 - (Po*L)/log(3)) * L / (2*E*A0)) * log(3 - (2*x)/L) ...
-    + (Po*L^2) / (4*E*A0);
-dup = -Po * x / (E * A);
+up = (1 / (E * A0)) * ((-p0 * x.^2) / 2 + (p0 * L * x) / 2);
+dup = -p0 * x / (E * A0);
 
 % Determinação das constantes para a solução homogênea
 up0 = up(1);

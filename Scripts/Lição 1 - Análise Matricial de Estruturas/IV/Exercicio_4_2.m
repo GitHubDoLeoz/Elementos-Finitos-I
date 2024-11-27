@@ -1,4 +1,3 @@
-% Solução item 4.1 - Solução analítica barra com seção variável
 close all; clear all; clc
 
 %% Parâmetros de entrada

@@ -1,36 +1,30 @@
-clc;
-clear;
-close all;
+clc; clear all; close all;
 
-% Parâmetros de entrada
+%% Dados do problema 
 E = 68e9;                 % Módulo de elasticidade (Pa)
 A = pi * (0.05^2);        % Área da seção transversal (m²)
 L = 2.0;                  % Comprimento da barra (m)
-Po = 3000;                % Carga máxima distribuída (N/m)
+p0 = 3000;                % Carga máxima distribuída (N/m)
 
-% Diferentes discretizações e valores de deslocamento
 nels = [5, 10, 20, 40];
+erro_euclidiano = zeros(1, length(nels));
 
-% Função para calcular a norma euclidiana dos erros
-normas_euclidianas = zeros(length(nels), 1);
-norma_euclidiana_erro = @(e, x) sqrt(trapz(x, e.^2));  % Corrigido para aceitar x como vetor
-
-figure;
-
-% Loop para cada valor de nel
+%% Resolução 
 for nel_idx = 1:length(nels)
     nel = nels(nel_idx);
     nnos = nel + 1;
     h = L / nel;
-    coord = linspace(0, L, nnos);
-    inci = [(1:nel)' (2:nnos)'];
+    coord = [0:h:L];
+    inci = [[1:nnos-1]' [2:nnos]'];
 
-    % Matriz de rigidez do elemento
-    ke = (E * A / h) * [1 -1; -1 1];
-
-    % Inicializar matriz de rigidez global e vetor de forças globais
+    ke = zeros(2);
+    fe = zeros(2, 1);
     K = zeros(nnos, nnos);
     F = zeros(nnos, 1);
+
+    ke = ((E*A) / h) * [1 -1; -1 1];
+    fe = (p0 * h / 2) * [1; 1];
+    u = zeros(nnos, 1);
 
     % Montar a matriz de rigidez e o vetor de forças globais
     for i = 1:nel
@@ -42,8 +36,8 @@ for nel_idx = 1:length(nels)
         % Cálculo das forças nodais equivalentes considerando carga distribuída triangular
         x1 = coord(no1);
         x2 = coord(no2);
-        f1 = Po * (x1 / L);
-        f2 = Po * (x2 / L);
+        f1 = p0 * (x1 / L);
+        f2 = p0 * (x2 / L);
         
         % Calcular força nodal exata através da integração da carga distribuída
         fe = (h / 6) * [2*f1 + f2; f1 + 2*f2];
@@ -51,59 +45,94 @@ for nel_idx = 1:length(nels)
         F(no2) = F(no2) + fe(2);
     end
 
-    % Aplicar condições de contorno
-    freedofs = 2:nnos;
-    uh = zeros(nnos, 1);
-    uh(freedofs, 1) = K(freedofs, freedofs) \ F(freedofs, 1);
+    % Condições de contorno
+    freedofs = [2:nnos];
+    u(freedofs, 1) = K(freedofs, freedofs) \ F(freedofs, 1);
 
-    % Solução analítica
-    x = linspace(0, L, 1000);  % Mais pontos para a solução analítica
-    u_exact = (Po / (6*E*A*L)) * x .* (3*L^2 - x.^2);  % Solução analítica exata
+    % Solução analítica 
+    x = [0:h/10:L];
+    ua = (p0 / (6*E*A*L)) * x .* (3*L^2 - x.^2);
 
-    %% Cálculo dos erros
-    uh_interp = interp1(coord, uh, x);  % Interpolar deslocamentos numéricos nos pontos de x
-    erro_percentual = 100 * abs((u_exact - uh_interp) ./ u_exact);  % Erro percentual
-    erro_absoluto = abs(u_exact - uh_interp);  % Erro absoluto
+    % Interpolar a solução numérica para 10 pontos dentro de cada elemento
+    u_interp = zeros((nnos*10)-10, 1);
 
-    % Calcular norma euclidiana dos erros
-    normas_euclidianas(nel_idx) = norma_euclidiana_erro(u_exact - uh_interp, x);  % Passar x como vetor
+    % Loop sobre cada elemento
+    for i = 1:nel
+        no1 = inci(i, 1);
+        no2 = inci(i, 2);
+        % Deslocamentos nos nós do elemento
+        u1 = u(no1);
+        u2 = u(no2);
 
-    % Exibir a norma euclidiana dos erros
-    fprintf('Norma L2 dos erros para %d elementos: %.10e m\n', nel, normas_euclidianas(nel_idx));
+        % Gera pontos internos igualmente espaçados no elemento
+        xx = linspace(h / 10, h - (h / 10), 9);
 
-    %% Gráficos - Deslocamento numérico e analítico
-    subplot(length(nels), 3, 3*nel_idx-2)
-    plot(coord, uh, 'o-k', x, u_exact, 'r');
-    grid on; xlabel('Posição x [m]'); ylabel('Deslocamento [m]');
+        for j = 1:9
+            % Funções de forma
+            N1 = (h - xx(j)) / h;
+            N2 = xx(j) / h;
+
+            % Interpolação dos deslocamentos para os pontos internos
+            u_interpele = N1 * u1 + N2 * u2;
+            u_interp(((no1 - 1) * 10) + (1 + j)) = u_interpele;
+        end
+
+        u_interp(((no1 - 1) * 10) + 11) = u(no2);
+    end
+
+    % Calcular o erro absoluto nos pontos de interpolação
+    erro_absolut = abs(ua - u_interp.');
+
+    % Calcular o erro relativo em porcentagem nos pontos de interpolação
+    erro_percent = (erro_absolut ./ ua) * 100;
+
+    % Cálculo da norma euclidiana dos erros
+    erro_euclidiano(nel_idx) = norm(erro_absolut);
+    titulo1 = sprintf('Norma L2: %.3e', erro_euclidiano(nel_idx));
+    
+    %% Plotagem
+    % Plotar os resultados para o valor atual de nel
+    subplot(length(nels), 3, 3*nel_idx - 2);
+    plot(coord, u, 'o-k', x, ua, '-r'); 
+    grid on;
+    xlabel('Posição [m]'); ylabel('Deslocamento [m]');
     title(sprintf('%d elementos', nel));
     if nel_idx == 1
         legend('Numérico', 'Analítico');
     end
 
-    %% Gráfico dos erros percentuais
-    subplot(length(nels), 3, 3*nel_idx-1)
-    plot(x, erro_percentual, '-b', 'LineWidth', 1.25);
-    grid on; xlabel('Posição x [m]'); ylabel('Erro [%]');
+    % Plotar o gráfico de erros percentuais
+    subplot(length(nels), 3, 3*nel_idx - 1);
+    plot(x, erro_percent, '-b', 'LineWidth', 1.25);
     title('Erro Percentual');
-    
-    %% Gráfico do erro absoluto
-    subplot(length(nels), 3, 3*nel_idx)
-    plot(x, erro_absoluto, '-g', 'LineWidth', 1.25);
-    grid on; xlabel('Posição x [m]'); ylabel('Erro Absoluto');
-    title(sprintf('Norma L2: %.3e', normas_euclidianas(nel_idx)));
+    xlabel('Posição [m]'); ylabel('Erro [%]');
+    grid on;
+
+    % Plotar o gráfico de erros absolutos
+    subplot(length(nels), 3, 3*nel_idx);
+    plot(x, erro_absolut, '-g', 'LineWidth', 1.25);
+    grid on;
+    title(titulo1);
+    xlabel('Posição [m]'); ylabel('Erro Absoluto [m]');
+end
+
+% Exibir normas euclidianas dos erros
+disp('Normas Euclidianas dos Erros:');
+for nel_idx = 1:length(nels)
+    fprintf('Para %d elementos: %.4e\n', nels(nel_idx), erro_euclidiano(nel_idx));
 end
 
 % Plotar a análise de convergência
 figure;
-loglog(nels, normas_euclidianas, 'o-m', 'LineWidth', 1.5);
+loglog(nels, erro_euclidiano, 'o-m', 'LineWidth', 1.5);
 xlabel('Número de Elementos'); ylabel('Norma Euclidiana dos Erros');
 title('Análise de Convergência');
 grid on;
 
 % Adicionar texto com os valores dos erros nas bolinhas
 for nel_idx = 1:length(nels)
-    text(nels(nel_idx), normas_euclidianas(nel_idx), ...
-        sprintf('%.3e', normas_euclidianas(nel_idx)), ...
+    text(nels(nel_idx), erro_euclidiano(nel_idx), ...
+        sprintf('%.3e', erro_euclidiano(nel_idx)), ...
         'VerticalAlignment', 'bottom', 'HorizontalAlignment', 'left');
 end
 hold off;

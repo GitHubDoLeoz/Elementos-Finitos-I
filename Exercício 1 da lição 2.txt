@@ -1,0 +1,609 @@
+\subsection{Barra Bi-engastada}
+
+\textnormal{I. Considere o problema de uma barra bi-engastada sujeita a um carregamento distribuído constante de valor $q_0 = 2000N/m$, conforme ilustrado na Figura 1. A barra tem comprimento total de $3m$, seção transversal com área $0.001m^2$ e material com módulo de elasticidade de $2.1\cdot10^{11}$.}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.6\linewidth]{Imagens/I.png}
+    \caption{Barra bi-engastada com carga distribuída constante. \cite{pavanello2024}.}
+    \label{fig:II1A}
+\end{figure}
+
+\textnormal{Para este caso, pede-se:}
+
+\begin{itemize}
+    \item[(1)] Escreva a equação diferencial e as condições de contorno que representem os deslocamentos axiais da barra.
+    \item[(2)] Usando o método de Galerkin, escreva a forma fraca do problema.
+    \item[(3)] Escreva as funções de forma de um elemento linear de 2 nós.
+    \item[(4)] Usando o elemento linear de 2 nós, escreva a matriz de rigidez do problema.
+    \item[(5)] Escreva o vetor de carga nodal equivalente.
+    \item[(6)] Usando uma discretização com 3 elementos, monte a matriz global do sistema, e o vetor de carga. Adotar $L_1 = 0.5$ , $L_2 = 1.0$ e $L_3 = 1.5$.
+    \item[(7)] Aplique as condições de contorno e determine os deslocamentos da estrutura.
+    \item[(8)] Usando a aproximação de elementos finitos, trace um gráfico dos deslocamentos $u(x)$ em função de $x$.
+    \item[(9)] Determine a relação deformação $\times$ deslocamento (Matriz [B]). \qquad $\epsilon(x) = [B]\{u\}$
+    \item[(10)] Trace um gráfico do campo de deformações $\epsilon(x)$ obtidas, em função de $x$.
+    \item[(11)] Determine a energia do elemento cujo comprimento é $L_3 = 1.5$, usando a fórmula clássica: $U = \frac{1}{2} \{u\}^T [K] \{u\}$.
+\end{itemize}
+
+\textnormal{O problema de valor de contorno deste problema é dado por:}
+
+\begin{equation}
+\text{PVC} 
+\left\{
+\begin{aligned}
+&EA \frac{d^2u(x)}{dx^2} = -q_0 \\
+&\text{sujeito a:} \\
+&u(0) = 0 \\
+&u(L) = 0
+\end{aligned}
+\right.
+\end{equation}
+
+\textnormal{Integrando-se uma vez obtém-se:}
+
+\begin{equation}
+EA \frac{du(x)}{dx} = -q_0 x + C_1
+\end{equation}
+
+\textnormal{Integrando-se novamente:}
+
+\begin{equation}
+EA u(x) = -\frac{q_0 x^2}{2} + C_1 x + C_2
+\end{equation}
+
+\textnormal{Com as condições de contorno dadas por $u(0) = 0$ e $u(L) = 0$, então a solução analítica deste problema é dada por:}
+
+\begin{equation*}
+    C_2 = 0 \qquad \quad C_1 = \frac{q_0L}{2}
+\end{equation*}
+
+\begin{equation}
+    u(x) = \frac{1}{EA} \left(-\frac{q_0 x^2}{2} + \frac{q_0L}{2} x \right)
+\end{equation}
+
+\textnormal{A forma fraca deste problema é dada por:}
+
+\begin{equation*}
+    \langle R(\varphi_{(x)}), W_l \rangle = 0 \\
+\end{equation*}
+
+\begin{equation}
+    \langle R(\varphi_{(x)}), W_l \rangle = \int_0^L \left(EA \frac{d^2\varphi_{(x)}}{dx^2} + q_0\right) W_ldx = 0
+\end{equation}
+
+\begin{equation*}
+    \langle R(\varphi_{(x)}), W_l \rangle = \int_0^L EA \frac{d^2\varphi_{(x)}}{dx^2}W_ldx + \int_0^L q_0 W_l dx = 0
+\end{equation*}
+
+\textnormal{Integrando por partes, obtém-se:}
+
+\begin{equation}
+    -EA \int_0^L \frac{d\varphi_{(x)}}{dx}\frac{dW_l}{dx} + \int_0^L q_0 W_l dx + \left[W_l\frac{d\varphi_{(x)}}{dx}\right]_0^L = 0
+\end{equation}
+
+\textnormal{Como as condições de contorno homogêneas são iguais a zero, a forma fraca é dada por:}
+
+\begin{equation}
+    -EA \int_0^L \frac{d\varphi_{(x)}}{dx}\frac{dW_l}{dx} + \int_0^L q_0 W_l dx = 0
+\end{equation}
+
+\textnormal{A escolha das funções de ponderação será baseada, como previamente proposto, no Método Galerkin, no qual estas são escolhidas como sendo as funções de forma $N_l$($l = 1, 2, 3, ..., M$), que são parâmetros utilizados na aproximação e que serão obtidas posteriormente na aplicação do Método dos Elementos Finitos. \cite{pavanello2024}. Dessa forma, tem-se:}
+
+\begin{equation*}
+    W_l = N_l \qquad l = 1, 2, 3, ..., M
+\end{equation*}
+
+\textnormal{E a Equação 7 fica da seguinte forma:}
+
+\begin{equation}
+    -EA \int_0^L \frac{d\varphi_{(x)}}{dx}\frac{dN_l}{dx} + \int_0^L q_0 N_l dx = 0
+\end{equation}
+
+\textnormal{Neste problema, a variável primária da Equação 1 que resume seu
+problema de equilíbrio estático, corresponde ao deslocamento nodal $u$, o qual, à partir
+das condições de contorno do problema, baseadas no suporte geométrico adotado, pode
+ser aproximado conforme a Equação 8.}
+
+\begin{equation}
+    u(x) \cong \overline{u}(x) = \alpha_1 + \alpha_2 x
+\end{equation}
+
+\textnormal{Esta aproximação pode ser avaliada em $x = 0$ e $x = L$, pontos que correspondem
+aos nós da barra, e, consequentemente à fronteira do problema. Portanto:}
+
+\begin{equation}
+\begin{align}
+    & \overline{u}(0) = \alpha_1 + \alpha_2 0 = u_i \\
+    & \overline{u}(L) = \alpha_1 + \alpha_2 L = u_j
+\end{align}
+\end{equation}
+
+\textnormal{Este sistema de equações pode ser representado:}
+
+\begin{equation*}
+    \begin{Bmatrix} {\alpha_1} \\ {\alpha_2} \end{Bmatrix} = \begin{bmatrix} 1 & 0 \\ {\frac{-1}{L}} & {\frac{1}{L}} \end{bmatrix} \begin{Bmatrix} {u_i} \\ {u_j} \end{Bmatrix}
+\end{equation*}
+
+\textnormal{Substituindo a equação acima na Equação 8, chega-se à:}
+
+\begin{equation}
+    \overline{u}(x) = \begin{bmatrix} 1-{\frac{x}{L}} & {\frac{x}{L}} \end{bmatrix} \begin{Bmatrix} u_i \\ u_j \end{Bmatrix}
+\end{equation}
+
+\textnormal{Tem-se então que as funções de forma correspondem à:}
+
+\begin{equation*}
+\begin{align*}
+    &N_i(x) = 1 - \frac{x}{L} \qquad \qquad \frac{dN_i(x)}{dx} = -\frac{1}{L} \\
+    &N_j(x) = \frac{x}{L} \qquad \qquad \quad \frac{dN_j(x)}{dx} = \frac{1}{L}
+\end{align*}
+\end{equation*}
+
+\textnormal{Com isso, é possível determinar matriz de rigidez do elemento de dois nós:}
+
+\begin{equation}
+    \begin{bmatrix} K \end{bmatrix} = \int_0^L EA \begin{bmatrix} {\frac{dN_i}{dx}\cdot\frac{dN_i}{dx} \quad \frac{dN_j}{dx}\cdot\frac{dN_i}{dx}} \\ \frac{dN_i}{dx}\cdot\frac{dN_j}{dx} \quad \frac{dN_j}{dx}\cdot\frac{dN_j}{dx} \end{bmatrix} dx
+\end{equation}
+
+\begin{equation*}
+    \begin{bmatrix} K \end{bmatrix} = \int_0^L EA \begin{bmatrix} \frac{-1}{L}\cdot\frac{-1}{L} \quad \frac{1}{L}\cdot\frac{-1}{L} \\ \frac{-1}{L}\cdot\frac{1}{L} \quad \frac{1}{L}\cdot\frac{1}{L} \end{bmatrix} dx
+\end{equation*}
+
+\begin{equation*}
+    \begin{bmatrix} K \end{bmatrix} = \int_0^L EA \begin{bmatrix} \frac{1}{L^2} \quad \frac{-1}{L^2} \\ \frac{-1}{L^2} \quad \frac{1}{L^2} \end{bmatrix} dx
+\end{equation*}
+
+\begin{equation*}
+    \begin{bmatrix} K \end{bmatrix} = EA \begin{bmatrix} \frac{x}{L^2} \quad \frac{-x}{L^2} \\ \frac{-x}{L^2} \quad \frac{x}{L^2} \end{bmatrix}_0^L \quad \rightarrow \quad \begin{bmatrix} K \end{bmatrix} = \begin{bmatrix} \frac{EA}{L} \quad \frac{-EA}{L} \\ \frac{-EA}{L} \quad \frac{EA}{L} \end{bmatrix}
+\end{equation*}
+
+\textnormal{Ainda:}
+
+\begin{equation}
+    \begin{bmatrix} K \end{bmatrix} = \frac{EA}{L} \begin{bmatrix} 1 \quad -1 \\ -1 \quad 1 \end{bmatrix}
+\end{equation}
+
+\textnormal{O vetor de carga equivalente deste problema pode ser apresentado como:}
+
+\begin{equation}
+    F_e = \int_0^L q(x) \begin{Bmatrix} N_i(x) \\ N_j(x) \end{Bmatrix}
+\end{equation}
+
+\textnormal{Isso corresponde a contribuição de um carregamento $q(x)$, o qual tendo sua distribuição ao longo de x conhecida permite a avaliação da integral acima. \cite{pavanello2024}. Neste caso, esta distribuição é uma constante e de valor $q_0$, tem-se portanto:}
+
+\begin{equation}
+    F_e = q_0 \int_0^L \begin{Bmatrix} N_i(x) \\ N_j(x) \end{Bmatrix} dx
+\end{equation}
+
+\begin{equation*}
+    \int_0^L N_i(x) \, dx = \int_0^L \left( 1 - \frac{x}{L} \right) dx = \left[x - \frac{x^2}{2L} \right]_0^L = L - \frac{L}{2} = \frac{L}{2}
+\end{equation*}
+
+\begin{equation*}
+    \int_0^L N_j(x) \, dx = \int_0^L \frac{x}{L} \, dx = \left[\frac{x^2}{2L} \right]_0^L = \frac{L}{2}
+\end{equation*}
+
+\textnormal{Portanto:}
+
+\begin{equation}
+    F_e = q_0 \begin{bmatrix} \frac{L}{2} \\ \frac{L}{2} \end{bmatrix}
+\end{equation}
+
+\textnormal{Ainda:}
+
+\begin{equation}
+    F_e = \begin{bmatrix} \frac{q_0L}{2} \\ \frac{q_0L}{2} \end{bmatrix}
+\end{equation}
+
+\vspace{0.5cm}
+
+\textnormal{Usando uma discretização com 3 elementos e adotando $L_1$ = 0.5 , $L_2$ = 1.0 e $L_3$ = 1.5, é possível determinar a matriz global do sistema, e o vetor de carga.}
+
+\begin{center}
+\begin{tikzpicture} 
+    % Desenho da viga
+    \draw[thick] (0,0) -- (9,0);
+    
+    % Divisões da viga
+    \draw[dashed] (0,0) -- (0,-0.5);
+    \draw[dashed] (2,0) -- (2,-0.5);
+    \draw[dashed] (5,0) -- (5,-0.5);
+    \draw[dashed] (9,0) -- (9,-0.5);
+    
+    % Nomes dos comprimentos
+    \draw[<->] (0,-0.5) -- (2,-0.5) node[midway, below] {$L_1 = 0.5$};
+    \draw[<->] (2,-0.5) -- (5,-0.5) node[midway, below] {$L_2 = 1.0$};
+    \draw[<->] (5,-0.5) -- (9,-0.5) node[midway, below] {$L_3 = 1.5$};
+    
+    % Nomes dos nós
+    \filldraw (0,0) circle (2pt) node[above] {1};
+    \filldraw (2,0) circle (2pt) node[above] {2};
+    \filldraw (5,0) circle (2pt) node[above] {3};
+    \filldraw (9,0) circle (2pt) node[above] {4};
+    
+    % Hachuras vermelhas nas áreas
+    \fill[red!50, pattern=crosshatch] (0,-1.5) -- (2,-2.5) -- (0,-2.5) -- cycle;
+    \fill[red!50, pattern=crosshatch] (2,-2.5) -- (2,-3.5) -- (0,-3.5) -- cycle;
+    \fill[red!50, pattern=crosshatch] (2,-2.5) -- (5,-3.5) -- (2,-3.5) -- cycle;
+    \fill[red!50, pattern=crosshatch] (5,-3.5) -- (5,-4.5) -- (2,-4.5) -- cycle;
+    \fill[red!50, pattern=crosshatch] (5,-3.5) -- (9,-4.5) -- (5,-4.5) -- cycle;
+    \fill[red!50, pattern=crosshatch] (9,-4.5) -- (9,-5.5) -- (5,-5.5) -- cycle;
+    
+    % Linhas pretas verticais
+    \draw[thick] (0,-1) -- (0,-5.5);
+    \draw[thick] (2,-1) -- (2,-5.5);
+    \draw[thick] (5,-1) -- (5,-5.5);
+    \draw[thick] (9,-1) -- (9,-5.5);
+    
+    % Linhas pretas horizontais
+    \draw[thick] (-0.5,-1.5) -- (9.5,-1.5);
+    \draw[thick] (-0.5,-2.5) -- (9.5,-2.5);
+    \draw[thick] (-0.5,-3.5) -- (9.5,-3.5);
+    \draw[thick] (-0.5,-4.5) -- (9.5,-4.5);
+    
+    % Linhas vermelhas para o diagrama linear
+    \draw[red, thick] (0,-1.5) -- (2,-2.5);
+    \draw[red, thick] (2,-2.5) -- (0,-3.5);
+    \draw[red, thick] (2,-2.5) -- (5,-3.5);
+    \draw[red, thick] (5,-3.5) -- (2,-4.5);
+    \draw[red, thick] (5,-3.5) -- (9,-4.5);
+    \draw[red, thick] (9,-4.5) -- (5,-5.5);
+    
+    % Eixo horizontal para o diagrama
+    \draw[thick] (-0.5,-5.5) -- (9.5,-5.5);
+    
+    % Nomes dos nós (em vermelho e com estilo diferente)
+    \node[red, above right] at (1,-2.2) {$N_1$};
+    \node[red, below left] at (1,-2.5) {$N_2$};
+    \node[red, above right] at (3.5,-3.2) {$N_2$};
+    \node[red, below left] at (3.5,-3.5) {$N_3$};
+    \node[red, above right] at (7,-4.15) {$N_3$};
+    \node[red, below right] at (6,-4.55) {$N_4$};
+\end{tikzpicture}
+\end{center}
+
+\begin{equation}
+    \varphi_{(x)} \cong u_{(x)} = \begin{bmatrix} N_1(x) \ N_2(x) \ N_3(x) \ N_4(x) \end{bmatrix} \cdot \begin{Bmatrix} u_1 \\ u_2 \\ u_3 \\ u_4 \end{Bmatrix}
+\end{equation}
+
+\textnormal{Para os elementos citados, as funções de forma são definidas da seguinte maneira:}
+
+\textnormal{Elemento (1):}
+
+\begin{equation*}
+    N_1(x) = 1 - \frac{x}{L_1} \qquad \quad \frac{dN_1(x)}{dx} = \frac{-1}{L_1}
+\end{equation*}
+
+\begin{equation*}
+    N_2(x) = \frac{x}{L_1} \qquad \quad \frac{dN_2(x)}{dx} = \frac{1}{L_1}
+\end{equation*}
+
+\textnormal{Elemento (2):}
+
+\begin{equation*}
+    N_2(x) = 1 - \frac{x-L_1}{L_2} \qquad \quad \frac{dN_2(x)}{dx} = \frac{-1}{L_2}
+\end{equation*}
+
+\begin{equation*}
+    N_3(x) = x - \frac{L_1}{L_2} \qquad \quad \frac{dN_3(x)}{dx} = \frac{1}{L_2}
+\end{equation*}
+
+\textnormal{Elemento (3):}
+
+\begin{equation*}
+    N_3(x) = 1 - \frac{x-(L_1+L_2)}{L_3} \qquad \quad \frac{dN_3(x)}{dx} = \frac{-1}{L_3}
+\end{equation*}
+
+\begin{equation*}
+    N_4(x) = x - \frac{L_1+L_2}{L_3} \qquad \quad \frac{dN_4(x)}{dx} = \frac{1}{L_3}
+\end{equation*}
+
+\vspace{0.5cm}
+
+\textnormal{Ao separar a forma fraca nas discretizações $L_1$, $L_2$ e $L_3$, obtém-se:}
+
+\begin{equation}
+    \langle R(\varphi_{(x)}), N_1 \rangle = EA \int_0^{L_1} \frac{d\varphi_{(x)}}{dx}\frac{dN_1(x)}{dx}dx - \int_0^{L_1} q_0 N_1(x) dx = 0
+\end{equation}
+
+\begin{equation}
+\begin{split}
+    \langle R(\varphi_{(x)}), N_2 \rangle = & EA \left(\int_0^{L_1} \frac{d\varphi_{(x)}}{dx}\frac{dN_2(x)}{dx}dx - \int_{L_1}^{L_1+L_2} \frac{d\varphi_{(x)}}{dx}\frac{dN_2(x)}{dx}dx\right) - \\
+    & \left(\int_0^{L_1} q_0 N_2(x) dx + \int_{L_1}^{L_1+L_2} q_0 N_2(x) dx \right) = 0
+\end{split}
+\end{equation}
+
+\begin{equation}
+\begin{split}
+    \langle R(\varphi_{(x)}), N_3 \rangle = & EA \left(\int_{L_1}^{L_2} \frac{d\varphi_{(x)}}{dx}\frac{dN_3(x)}{dx}dx - \int_{L_2}^{L_2+L_3} \frac{d\varphi_{(x)}}{dx}\frac{dN_3(x)}{dx}dx\right) - \\
+    & \left(\int_{L_1}^{L_2} q_0 N_3(x) dx + \int_{L_2}^{L_2+L_3} q_0 N_3(x) dx \right) = 0
+\end{split}
+\end{equation}
+
+\begin{equation}
+    \langle R(\varphi_{(x)}), N_4 \rangle = EA \int_{L_2+L_3}^{L_1+L_2+L_3} \frac{d\varphi_{(x)}}{dx}\frac{dN_4(x)}{dx}dx - \int_{L_2+L_3}^{L_1+L_2+L_3} q_0 N_4(x) dx = 0
+\end{equation}
+
+\vspace{0.5cm}
+
+\textnormal{Agrupando as equações anteriores na forma matricial, obtém-se:}
+
+\begin{equation}
+    EA \int_0^{L_1} \begin{Bmatrix} \frac{dN_1(x)}{dx} \\ \frac{dN_1(x)}{dx} \\ 0 \\ 0 \end{Bmatrix} \cdot \begin{Bmatrix} \frac{dN_1(x)}{dx} \ \frac{dN_1(x)}{dx} \ 0 \ 0 \end{Bmatrix}dx \cdot \begin{Bmatrix} u_1 \\ u_2 \\ u_3 \\ u_4 \end{Bmatrix} - q_0 \int_0^{L_1} \begin{Bmatrix} N_1 \\ N_2 \\ 0 \\ 0 \end{Bmatrix} \cdot \begin{Bmatrix} N_1 \ N_2 \ 0 \ 0 \end{Bmatrix}dx = 0
+\end{equation}
+
+\begin{equation}
+    EA \int_0^{L_1+L_2} \begin{Bmatrix} 0 \\ \frac{dN_2(x)}{dx} \\ \frac{dN_3(x)}{dx} \\ 0 \end{Bmatrix} \cdot \begin{Bmatrix} 0 \ \frac{dN_2(x)}{dx} \ \frac{dN_3(x)}{dx} \ 0 \end{Bmatrix}dx \cdot \begin{Bmatrix} u_1 \\ u_2 \\ u_3 \\ u_4 \end{Bmatrix} - q_0 \int_{L_1}^{L_1+L_2} \begin{Bmatrix} 0 \\ N_2 \\ N_3 \\ 0 \end{Bmatrix} \cdot \begin{Bmatrix} 0 \ N_2 \ N_3 \ 0 \end{Bmatrix}dx = 0
+\end{equation}
+
+\begin{equation}
+    EA \int_0^{L} \begin{Bmatrix} 0 \\ 0 \\ \frac{dN_3(x)}{dx} \\ \frac{dN_4(x)}{dx} \end{Bmatrix} \cdot \begin{Bmatrix} 0 \ 0 \ \frac{dN_3(x)}{dx} \ \frac{dN_4(x)}{dx} \end{Bmatrix}dx \cdot \begin{Bmatrix} u_1 \\ u_2 \\ u_3 \\ u_4 \end{Bmatrix} - q_0 \int_{L_2}^{L} \begin{Bmatrix} 0 \\ 0 \\ N_3 \\ N_4 \end{Bmatrix} \cdot \begin{Bmatrix} 0 \ 0 \ N_3 \ N_4 \end{Bmatrix}dx = 0
+\end{equation}
+
+\textnormal{Separando as equações em termos, o primeiro termo representa as matrizes de rigidez e o segundo termo corresponde ao vetor de forças. Assim, as matrizes de rigidez são expressas da seguinte maneira:}
+
+\begin{equation*}
+    [K_{e_1}] = \int_0^{L_1} EA \begin{bmatrix}
+    \frac{dN_1(x)}{dx} & \frac{dN_2(x)}{dx} \\
+    \frac{dN_1(x)}{dx} & \frac{dN_2(x)}{dx} \\
+    \end{bmatrix} dx =
+    \int_0^{L_1} EA \begin{bmatrix}
+    -\frac{1}{L_1} & \frac{1}{L_1} \\
+    -\frac{1}{L_1} & \frac{1}{L_1} \\
+    \end{bmatrix} dx =
+    \left[ \frac{EA}{L_1} \begin{bmatrix}
+    1 & -1 \\
+    -1 & 1 \\
+    \end{bmatrix} x \right]_0^{L_1} = \frac{EA}{L_1} \begin{bmatrix}
+    1 & -1 \\
+    -1 & 1 \\
+    \end{bmatrix}
+\end{equation*}
+
+\begin{equation*}
+    [K_{e_2}] = \int_{L_1}^{L_2} EA \begin{bmatrix}
+    \frac{dN_2(x)}{dx} & \frac{dN_3(x)}{dx} \\
+    \frac{dN_2(x)}{dx} & \frac{dN_3(x)}{dx} \\
+    \end{bmatrix} dx =
+    \int_{L_1}^{L_2} EA \begin{bmatrix}
+    -\frac{1}{L_2} & \frac{1}{L_2} \\
+    -\frac{1}{L_2} & \frac{1}{L_2} \\
+    \end{bmatrix} dx =
+    \left[ \frac{EA}{L_2} \begin{bmatrix}
+    1 & -1 \\
+    -1 & 1 \\
+    \end{bmatrix} x \right]_{L_1}^{L_2} = \frac{EA}{L_2} \begin{bmatrix}
+    1 & -1 \\
+    -1 & 1 \\
+    \end{bmatrix}
+\end{equation*}
+
+\begin{equation*}
+    [K_{e_3}] = \int_{L_2}^{L_3} EA \begin{bmatrix}
+    \frac{dN_3(x)}{dx} & \frac{dN_4(x)}{dx} \\
+    \frac{dN_3(x)}{dx} & \frac{dN_4(x)}{dx} \\
+    \end{bmatrix} dx =
+    \int_{L_2}^{L_3} EA \begin{bmatrix}
+    -\frac{1}{L_3} & \frac{1}{L_3} \\
+    -\frac{1}{L_3} & \frac{1}{L_3} \\
+    \end{bmatrix} dx =
+    \left[ \frac{EA}{L_3} \begin{bmatrix}
+    1 & -1 \\
+    -1 & 1 \\
+    \end{bmatrix} x \right]_{L_2}^{L_3} = \frac{EA}{L_3} \begin{bmatrix}
+    1 & -1 \\
+    -1 & 1 \\
+    \end{bmatrix}
+\end{equation*}
+
+\textnormal{Ao montar o sistema global de rigidez, obtém-se:}
+
+\begin{equation}
+    [K] = EA \begin{bmatrix}
+     \frac{1}{L_1} & -\frac{1}{L_1} & 0 & 0 \\
+    -\frac{1}{L_1} & \frac{1}{L_1} + \frac{1}{L_2} & -\frac{1}{L_2} & 0 \\
+    0 & -\frac{1}{L_2} & \frac{1}{L_2} + \frac{1}{L_3} & -\frac{1}{L_3} \\
+    0 & 0 & -\frac{1}{L_3} & \frac{1}{L_3} \\
+    \end{bmatrix} = 10^6 \begin{bmatrix}
+    420 & -420 & 0 & 0 \\
+    -420 & 630 & -210 & 0 \\
+    0 & -210 & 350 & -140 \\
+    0 & 0 & -140 & 140 \\
+    \end{bmatrix}
+\end{equation}
+
+\textnormal{Os vetores de forças podem ser representados da seguinte forma:}
+
+\begin{equation*}
+    [F_{e_1}] = \int_0^{L_1} q_0 \begin{bmatrix}
+    1 - \frac{x}{L_1} \\
+    \frac{x}{L_1} \\
+    \end{bmatrix} dx = q_0 \begin{bmatrix}
+    \left. x - \frac{x^2}{2 \cdot L_1} \right|_0^{L_1} \\
+    \left. \frac{x^2}{2 \cdot L_1} \right|_0^{L_1} \\
+    \end{bmatrix} = q_0 \begin{bmatrix}
+    \frac{L_1}{2} \\
+    \frac{L_1}{2} \\
+    \end{bmatrix}
+\end{equation*}
+
+\begin{equation*}
+    [F_{e_2}] = \int_{L_1}^{L_2} q_0 \begin{bmatrix}
+    1 - \frac{x + L_1}{1} \\
+    \frac{x + L_1}{1} \\
+    \end{bmatrix} dx = q_0 \begin{bmatrix}
+    \left. x - \frac{x^2}{2} + L_1x \right|_{L_1}^{L_2} \\
+    \left. \frac{x^2}{2} - L_1x \right|_{L_1}^{L_2} \\
+    \end{bmatrix} = q_0 \begin{bmatrix}
+    \frac{L_2}{2} \\
+    \frac{L_2}{2} \\
+    \end{bmatrix}
+\end{equation*}
+
+\begin{equation*}
+    [F_{e_3}] = \int_{L_2}^{L_3} q_0 \begin{bmatrix}
+    1 - \frac{x + L_3}{L_2} \\
+    \frac{x + L_3}{L_2} \\
+    \end{bmatrix} dx = q_0 \begin{bmatrix}
+    \left. x - \frac{x^2}{2} + 0.75x \right|_{L_2}^{L_3} \\
+    \left. \frac{x^2}{2} - 0.75x \right|_{L_2}^{L_3} \\
+    \end{bmatrix} = q_0 \begin{bmatrix}
+    \frac{L_3}{2} \\
+    \frac{L_3}{2} \\
+    \end{bmatrix}
+\end{equation*}
+
+\textnormal{Ao montar o vetor de força, tem-se:}
+
+\begin{equation*}
+    [F_e] = q_0 \begin{bmatrix}
+    \frac{L_1}{2} \\ \frac{L_1+L_2}{2} \\ \frac{L_2+L_3}{2} \\ \frac{L_3}{2}
+    \end{bmatrix} = \begin{bmatrix}
+    500 \\
+    500 + 1000 \\
+    1000 + 1500 \\
+    1500 \\
+    \end{bmatrix} = \begin{bmatrix}
+    500 \\
+    1500 \\
+    2500 \\
+    1500 \\
+    \end{bmatrix}
+\end{equation*}
+
+\textnormal{Aplicando as condições de contorno $u(0) = u_1 = 0$ e $u(L) = u_4 = 0$, tem-se o seguinte sistema de equações:}
+
+\begin{equation}
+    10^6 \begin{bmatrix}
+    420 & -420 & 0 & 0 \\
+    -420 & 630 & -210 & 0 \\
+    0 & -210 & 350 & -140 \\
+    0 & 0 & -140 & 140 \\
+    \end{bmatrix} \begin{Bmatrix}
+    u_1 = 0 \\ u_2 \\ u_3 \\ u_4 = 0 
+    \end{Bmatrix} = \begin{Bmatrix}
+    500 \\ 1500 \\ 2500 \\ 1500
+    \end{Bmatrix}
+\end{equation}
+
+\textnormal{Ao reduzir o sistema de equações, tem-se:}
+
+\begin{equation}
+    \begin{bmatrix} 
+    6.3 \cdot 10^8 & -2.1 \cdot 10^8 \\ 
+    -2.1 \cdot 10^8 & 3.5 \cdot 10^8 \\ 
+    \end{bmatrix} \cdot \begin{Bmatrix}
+    u_2 \\
+    u_3 \\
+    \end{Bmatrix} = \begin{Bmatrix}
+    1500 \\
+    2500 \\
+    \end{Bmatrix}
+\end{equation}
+
+\textnormal{Ao resolver o sistema de equações lineares acima, obtêm-se os seguintes deslocamentos nodais:}
+
+\begin{equation*}
+\begin{align*}
+    u_2 = 5.9523 \cdot 10^{-6}m \qquad \quad u_3 = 1.0714 \cdot 10^{-5}m
+\end{align*}
+\end{equation*}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[trim=1.5cm 8.5cm 1.5cm 8.5cm, clip, width=1\linewidth]{Imagens/I-8.pdf}
+    \caption{Deslocamento $u(x)$ e comparação entre solução analítica e por elementos finitos.}
+    \label{fig:I8}
+\end{figure}
+
+\textnormal{A relação entre deformação e deslocamento neste problema pode ser expressa da seguinte forma:}
+
+\begin{equation}
+    \epsilon(x) = \begin{bmatrix} B \end{bmatrix} \begin{Bmatrix} u \end{Bmatrix}
+\end{equation}
+
+\textnormal{Na qual \begin{bmatrix} B \end{bmatrix} é a matriz de deformação, que é definida pelas derivadas das funções de forma. Portanto:}
+
+\begin{equation}
+    \epsilon(x) = \frac{du(x)}{dx} = \begin{bmatrix} \frac{dN_1(x)}{dx} \ \frac{dN_2(x)}{dx} \ \frac{dN_3(x)}{dx} \ \frac{dN_4(x)}{dx} \end{bmatrix} \cdot \begin{Bmatrix} u_1 \\ u_2 \\ u_3 \\ u_4 \end{Bmatrix}
+\end{equation}
+
+\textnormal{Para o Elemento 1, a deformação pode ser expressa da seguinte maneira:}
+
+\begin{equation}
+    \epsilon(x) = \frac{due_1}{dx} = \begin{bmatrix} \frac{-1}{L_1} \ \frac{1}{L_1} \ 0 \ 0} \end{bmatrix} \cdot \begin{Bmatrix} u_1 \\ u_2 \\ u_3 \\ u_4 \end{Bmatrix}
+\end{equation}
+
+\textnormal{Ainda:}
+
+\begin{equation*}
+    \frac{due_1}{dx} = \frac{-1}{L_1}u_1 + \frac{1}{L_1}u_2 \quad \rightarrow \quad \frac{due_1}{dx} = \frac{u_2}{L_1} = \frac{5.9523 \cdot 10^{-6}}{0.5} = 1.1905 \cdot 10^{-5}
+\end{equation*}
+
+\vspace{1.25cm}
+
+\textnormal{Para o Elemento 2:}
+
+\begin{equation}
+    \epsilon(x) = \frac{due_2}{dx} = \begin{bmatrix} 0 \ \frac{-1}{L_2} \ \frac{1}{L_2}} \ 0 \end{bmatrix} \cdot \begin{Bmatrix} u_1 \\ u_2 \\ u_3 \\ u_4 \end{Bmatrix}
+\end{equation}
+
+\textnormal{Ainda:}
+
+\begin{equation*}
+    \frac{due_2}{dx} = \frac{-1}{L_2}u_2 + \frac{1}{L_2}u_3 \quad \rightarrow \quad \frac{due_2}{dx} = -\frac{u_2}{L_2} + \frac{u_3}{L_2} = -\frac{5.9523 \cdot 10^{-6}}{1} + \frac{1.0714 \cdot 10^{-5}}{1} = 4.7616 \cdot 10^{-6}
+\end{equation*}
+
+\textnormal{Para o Elemento 3:}
+
+\begin{equation}
+    \epsilon(x) = \frac{due_3}{dx} = \begin{bmatrix} 0 \ 0 \ \frac{-1}{L_3} \ \frac{1}{L_3}} \end{bmatrix} \cdot \begin{Bmatrix} u_1 \\ u_2 \\ u_3 \\ u_4 \end{Bmatrix}
+\end{equation}
+
+\textnormal{Ainda:}
+
+\begin{equation*}
+    \frac{due_3}{dx} = \frac{-1}{L_3}u_3 + \frac{1}{L_3}u_4 \quad \rightarrow \quad \frac{due_3}{dx} = -\frac{u_3}{L_3} + \frac{u_4}{L_3} = -\frac{1.07 \cdot 10^{-5}}{1.5} = -7,1428 \cdot 10^{-6}
+\end{equation*}
+
+\textnormal{O campo de deformação é apresentado na Figura 3, sendo constante para cada elemento.}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[trim=3.25cm 8.5cm 3.25cm 8.75cm, clip, width=0.875\linewidth]{Imagens/I-8Def.pdf}
+    \caption{Campo de deformação $\epsilon(x)$.}
+    \label{fig:I8DEF}
+\end{figure}
+
+\textnormal{A energia do elemento, cujo comprimento é $L_3 = 1.5$, é dada por:}
+
+\begin{equation}
+    U = \frac{1}{2} \begin{Bmatrix} u_3 \ u_4 \end{Bmatrix}} \begin{bmatrix}
+    \frac{EA}{L_2} + \frac{EA}{L_3}  & -\frac{EA}{L_3} \\
+    -\frac{EA}{L_3} & \frac{EA}{L_3} \\
+    \end{bmatrix}
+    \begin{Bmatrix}
+    u_3 \\
+    u_4 \\
+    \end{Bmatrix}
+\end{equation}
+
+\textnormal{Ainda:}
+
+\begin{equation}
+    U = \frac{1}{2} \begin{Bmatrix} 
+    1.0714 \cdot 10^{-5} \ 0 
+    \end{Bmatrix}} 
+    \begin{bmatrix}
+    3.5 \cdot 10^8 & -1.4 \cdot 10^8 \\
+    -1.4 \cdot 10^8 & 1.4 \cdot 10^8 \\
+    \end{bmatrix}
+    \begin{Bmatrix}
+    1.0714 \cdot 10^{-5} \\
+    0 \\
+    \end{Bmatrix}
+\end{equation}
+
+\begin{equation*}
+    U = 2.20089 \cdot 10^{-2}J
+\end{equation*}

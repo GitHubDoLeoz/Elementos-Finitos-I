@@ -5,10 +5,10 @@ clc; clear all; close all;
 modos = 10;
 
 % Comprimentos dos galhos
-L1 = 0.3188;
-L2 = 0.2530;
-L3 = 0.2008;
-L4 = 0.1594;
+L1 = 6.8683;
+L2 = 5.4514;
+L3 = 4.3267;
+L4 = 3.4341;
 
 % Coordenadas dos nós
 coord = [1,   0,                         0;
@@ -49,10 +49,10 @@ inci = [1,  1,  1, 2;
 Tmat = [11.3e9 805 0.38];
 
 % Propriedades geométricas
-Tgeo = [pi*((0.18/2)^2)    (pi*((0.18/2)^4))/4;
-        pi*((0.1273/2)^2)  (pi*((0.1273/2)^4))/4;
-        pi*((0.09/2)^2)    (pi*((0.09/2)^4))/4;
-        pi*((0.0636/2)^2)  (pi*((0.0636/2)^4))/4];
+Tgeo = [pi*((18/2)^2)       (pi*((18/2)^4))/4;
+        pi*((12.7279/2)^2)  (pi*((12.7279/2)^4))/4;
+        pi*((9/2)^2)        (pi*((9/2)^4))/4;
+        pi*((6.3639/2)^2)   (pi*((6.3639/2)^4))/4];
 
 %% Inicialização de variáveis
 nnos = size(coord, 1);
@@ -128,19 +128,19 @@ for i = 1:nel
     
     % Matriz de massa
     me_por = (rho * A * h / 6) * [2 0 0 1 0 0;
-                                  0 2 0 0 1 0;
+                                  0 0 0 0 0 0;
                                   0 0 0 0 0 0;
                                   1 0 0 2 0 0;
-                                  0 1 0 0 2 0;
+                                  0 0 0 0 0 0;
                                   0 0 0 0 0 0];
     
-    me_por = me_por + (rho * A * h / 420) * [0    0     0     0    0     0;
-                                             0   156   22*h   0   54   -13*h;
-                                             0   22*h 4*h^2   0  13*h  -3*h^2;
-                                             0    0     0     0    0     0;
-                                             0   54    13*h   0   156  -22*h;
-                                             0  -13*h -3*h^2  0  -22*h  4*h^2];
-                         
+    me_por = me_por + (rho * A * h / 420) * [0    0    0     0     0     0;
+                                             0  156  22*h    0    54   -13*h;
+                                             0 22*h  4*h^2   0   13*h  -3*h^2;
+                                             0    0    0     0     0     0;
+                                             0   54  13*h    0   156   -22*h;
+                                             0 -13*h -3*h^2  0  -22*h   4*h^2];
+
     me = T' * me_por * T;
 
     % Montagem das matrizes globais
@@ -161,7 +161,6 @@ omeg = sqrt(D) / (2 * pi);
 
 % Configura a janela da figura para tela cheia para os modos de vibração
 figure(1);
-set(gcf, 'WindowState', 'maximized');
 
 % Determina os limites da estrutura para a escala
 xmax = max(coord(:, 2));
@@ -170,36 +169,25 @@ xmin = min(coord(:, 2));
 ymin = min(coord(:, 3));
 Lscale = max((xmax - xmin), (ymax - ymin));
 
-% Parâmetros de animação
-numFrames = 40;
-
 % Loop para plotar os modos escolhidos
 for modo = 1:modos
     subplot(2, ceil(modos/2), modo);
-    
-    % Cálculo da escala e da coordenada deslocada
-    scale = (Lscale * 0.5) / max(abs(V(:, modo)));
+    scale = (Lscale * 0.1) / max(abs(V(:, modo)));
     coord_deslocada = coord + [zeros(nnos, 1), V(1:3:3*nnos-1, modo), V(2:3:3*nnos, modo)] * scale;
-
-    % Animação da deformação
-    for frame = 1:numFrames
-        % Interpolação entre a malha original e a deformada
-        alpha = frame / numFrames;
-        coord_atual = coord + alpha * (coord_deslocada - coord);
-        
-        % Plotagem da estrutura original e deformada
-        cla; index = 1; plotMalha(coord, inci, index, coord_atual);
-                
-        % Configura título e exibe a frequência
-        title(['(Modo: ', num2str(modo), ' - Frequência: ', num2str(omeg(modo), '%.3f'), ' Hz)']);
-        
-        % Adicionar legenda
-        if modo == 1 && frame == 1
-            annotation('textbox', [0.5, 0.01, 0.3, 0.05], ...
-                       'String', 'Malha Original: preto, Malha Deformada: vermelho', ...
-                       'FitBoxToText', 'on');
-        end
-        
-        pause(0.02);
-    end
+    
+    % Plotagem da estrutura deformada e original
+    index = 1;
+    plotMalha(coord, inci, index, coord_deslocada);
+    title(['Modo: ', num2str(modo), ' - Frequência: ', num2str(omeg(modo), '%.3f'), 'Hz']);
 end
+
+%% Visualização da estrutura
+figure(2); clf;
+plotMalha(coord, inci, 0, coord);
+title('Estrutura da Árvore');
+
+%% Plotagem das frequências modais ao longo dos modos
+figure(3);
+plot(1:modos, omeg, 'o', 'LineWidth', 1.5);
+xlabel('Modo'); ylabel('Frequência [Hz]');
+title('Frequências Modais'); grid on;

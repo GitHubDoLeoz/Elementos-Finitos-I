@@ -1,52 +1,42 @@
-% ======================================================================
-% Análise Numérica de uma Barra com Seção Varíavel com Carga Distribuida
-% ======================================================================
+clc; clear all;
 
-close all; clear all; clc;
+%% Parâmetros de entrada
+E = 210e9;      % Módulo de elasticidade (Pa)
+A0 = 0.001;     % Área na seção transversal no ponto x = 0 (m²)
+AI = 3*A0;      % Área na seção transversal no ponto x = L (m²)
+P0 = 2000;      % Carga distribuída
+L = 3;          % Comprimento total da barra (m)
+F = 0;          % Carga pontual na extremidade direita (N)
 
-%% Entrada de dados
-L = 10.0;                % Comprimento total da barra (m)
-E = 210e9;              % Módulo de elasticidade (Pa)
-Ao = 0.01;             % Área na seção transversal no ponto x = 0 (m²)
-p0 = 1000;              % Carga distribuída constante
-nels = [8];  % Diferentes números de elementos
+nels = 15;
 
-% Inicialização para armazenar normas euclidianas dos erros
-subplot_length = length(nels);
-normas_euclidianas_u = zeros(subplot_length, 1);
-normas_euclidianas_def = zeros(subplot_length, 1);
-normas_euclidianas_ten = zeros(subplot_length, 1);
-
-%% Loop para diferentes números de elementos
-for n_idx = 1:subplot_length
+%% Resolução
+for n_idx = 1:length(nels)
     nel = nels(n_idx);
     nnos = nel + 1;
-    he = L / nel;
-    xn = linspace(0, L, nnos);
-    inci = [(1:nnos-1)', (2:nnos)'];
+    h = L / nel;
+    coord = [0:h:L];
+    inci = [[1:nnos-1]' [2:nnos]'];
 
-    %% Montagem da matriz de rigidez
-    Kg = zeros(nnos);
+    Kg = zeros(nnos, nnos);
     Fg = zeros(nnos, 1);
-    uh = zeros(nnos, 1);
-    def = zeros(nel, 1);
-    Ten = zeros(nel, 1);
+    Bg = [-1/h 1/h];
 
     % Montagem da matriz de rigidez global
     for e = 1:nel
         % Coordenadas do elemento
-        x1 = xn(inci(e, 1));
-        x2 = xn(inci(e, 2));
+        x1 = coord(inci(e, 1));
+        x2 = coord(inci(e, 2));
 
         % Áreas nos pontos x1 e x2
-        A1 = Ao * (3 - (2 * x1 / L));
-        A2 = Ao * (3 - (2 * x2 / L));
+        A1 = A0 * (3 - (2 * x1 / L));
+        A2 = A0 * (3 - (2 * x2 / L));
 
         % Rigidez do elemento
         ke = (2 * E / (x2 - x1)) * [(A1 + A2) / 2, -(A1 + A2) / 2; -(A1 + A2) / 2, (A1 + A2) / 2];
-        f1 = p0 * x1 / L;
-        f2 = p0 * x2 / L; 
-        fe = (he / 6) * [2*f1 + f2; f1 + 2*f2];
+        f1 = P0 * x1 / L;
+        f2 = P0 * x2 / L; 
+        fe = (h / 6) * [2*f1 + f2; f1 + 2*f2];
 
         % Montagem na matriz global
         Kg(inci(e,:), inci(e,:)) = Kg(inci(e,:), inci(e,:)) + ke;
@@ -54,140 +44,138 @@ for n_idx = 1:subplot_length
         Fg(inci(e,:)) = Fg(inci(e,:)) + fe(2);
     end
 
-    % Aplicar as condições de contorno (u(0) = 0 e u(L) = 0)
+    % Condições de contorno
+    Fg(nnos) = Fg(nnos) + F;
     freedofs = 2:(nnos-1);
-    uh(freedofs, 1) = Kg(freedofs, freedofs) \ Fg(freedofs, 1);
 
-    %% Pós-processamento
-    xc = (xn(1:end-1) + xn(2:end)) / 2; % Coordenadas médias dos elementos
-    for e = 1:nel
-        % Coordenadas dos nós do elemento
-        x1 = xn(inci(e, 1));
-        x2 = xn(inci(e, 2));
-        Le = x2 - x1;
+    % Inicializar vetor de deslocamento
+    u = zeros(nnos, 1);
+    u(freedofs) = Kg(freedofs, freedofs) \ Fg(freedofs);
 
-        % Deslocamentos nos nós do elemento
-        ue = uh(inci(e, :));
+    % Calcular forças nodais reativas
+    FR = Kg * u;
+    T = zeros(nel, 1);
+    def = zeros(nel, 1);
 
-        % Cálculo da variação do deslocamento (du/dx)
-        def(e) = (ue(2) - ue(1)) / Le;
+    % Pré-alocar o vetor coord_mid para os pontos médios de cada elemento
+    coord_mid = zeros(1, nel);
 
-        % Cálculo da tensão numérica
-        Ten(e) = E * def(e);
+    % Calcular as coordenadas dos pontos médios
+    for i = 1:nel
+        coord_mid(i) = (coord(i) + ((coord(i+1) - coord(i)) / 2));
     end
 
-    %% Solução analítica
-    x = linspace(0, L, 1000);
-    A_x = Ao * (3 - (2 * x / L));
-    u = (p0 * L^2 / (16 * Ao * E)) * (((3 - (2 * x) / L).^2) / 2 - 6 .* (3 - (2 * x) / L) + 9 .* log(3 - (2 * x) / L)) ...
-    - (((-p0 * L / log(3)) + (9 * p0 * L) / 8) * L) / (2 * E * Ao) .* log(3 - (2 * x) / L) ...
-    + (11 * p0 * L^2) / (32 * E * Ao);
+    % Calculo das tensões dentro de cada elemento
+    somaF = 0;
+    for j = 1:(nnos-1)
+        A1 = A0 * (3 - (2 * coord(j) / L));
+        A2 = A0 * (3 - (2 * coord(j+1) / L));
+        Am = (A1 + A2) / 2;
+        somaF = somaF + FR(j);
+        FIE = -somaF;
+        TE = (FIE/Am);
+        T(j,1) = T(j,1) + TE; 
+        DEF(j) = Bg*u(j:j+1);
+    end
 
-    % Definindo os termos individuais
-    dudx = gradient(u,x);
+    %% Solução analítica 
+    % Cálculo do deslocamento
+    x = [0:h/10:L];
+    ua = (P0 * L^2 / (16 * A0 * E)) * (((3 - (2 * x) / L).^2) / 2 - 6 .* (3 - (2 * x) / L) + 9 .* log(3 - (2 * x) / L)) ...
+    - (((-P0 * L / log(3)) + (9 * P0 * L) / 8) * L) / (2 * E * A0) .* log(3 - (2 * x) / L) ...
+    + (11 * P0 * L^2) / (32 * E * A0);
+
+    % Cálculo da deformação
+    dudx = gradient(ua,x);
 
     % Cálculo da tensão
-    sigma = dudx * E;
+    sxx = dudx * E;
 
-    %% Cálculo do erro percentual
-    % Erro no deslocamento
-    uh_interp = interp1(xn, uh, x, 'linear', 'extrap');
-    erro_absoluto_u = abs(u - uh_interp);
-    normas_euclidianas_u(n_idx) = sqrt(trapz(x, erro_absoluto_u.^2));
+    %% ERROS 
+    % ERROS DO DESLOCAMENTO INTERPOLANDO PELAS FUNÇÕES DE FORMA DO ELEMENTO
+    u_interp = zeros((nnos * 10) - 10, 1);
+    d_interp = zeros((nnos * 10) - 10, 1);
+    t_interp = zeros((nnos * 10) - 10, 1);
 
-    % Erro na deformação
-    def_interp = interp1(xc, def, x, 'linear', 'extrap');
-    erro_absoluto_def = abs(dudx - def_interp);
-    normas_euclidianas_def(n_idx) = sqrt(trapz(x, erro_absoluto_def.^2));
-    
-    % Erro na tensão
-    sigma_interp = interp1(xc, Ten, x, 'linear', 'extrap');
-    erro_absoluto_ten = abs(sigma - sigma_interp);
-    normas_euclidianas_ten(n_idx) = sqrt(trapz(x, erro_absoluto_ten.^2));
+    % Loop sobre cada elemento
+    for i = 1:nel
+        no1 = inci(i,1);
+        no2 = inci(i,2);
+        u1 = u(no1);
+        u2 = u(no2);
+        xx = linspace(h/10, h - (h/10), 9);
 
-    %% Gráficos
-    % Deslocamentos
-    figure;
+        for j = 1:9
+            d_interpele = DEF(i);
+            d_interp(((no1 - 1) * 10) + (1 + j)) = d_interpele;
+            d_interp((no2 * 10) - 9) = d_interpele;
+            d_interp(1) = DEF(1);
+            
+            t_interpele = T(i);
+            t_interp(((no1 - 1) * 10) + (1 + j)) = t_interpele;
+            t_interp((no2 * 10) - 9) = t_interpele;
+            t_interp(1) = T(1);
 
-    % Subplot 1: Deslocamento - Comparação numérica e analítica
-    subplot(3, 2, 1);
-    plot(xn, uh, 'o-k', x, u, 'R'); % Comparação numérica e analítica
-    grid on; 
-    xlabel('Posição x [m]'); 
-    ylabel('Deslocamento [m]');
+            N1 = ((h) - xx(j)) / h;
+            N2 = xx(j) / h;
+            u_interpele = N1 * u1 + N2 * u2;
+            u_interp(((no1 - 1) * 10) + (1 + j)) = u_interpele;
+        end
+        
+        u_interp(((no1 - 1) * 10) + 11) = u(no2);
+    end
+
+    erro_absolut = abs(ua - u_interp');
+    erro_absolut2 = abs(sxx - t_interp');
+    erro_absolut3 = abs(dudx - d_interp');
+    erro_euclidiano1 = norm(erro_absolut);
+    erro_euclidiano2 = norm(erro_absolut2);
+    erro_euclidiano3 = norm(erro_absolut3);
+
+    %% Plotagem
+    % Deslocamento
+    figure(1);
+    subplot(3,2,1);
+    plot(coord, u, 'o-k', x, ua, '-r');
+    grid on; xlabel('Posição x [m]'); ylabel('Deslocamento [m]');
     title(sprintf('%d elementos', nel));
-    legend('Numérico', 'Analítico');
+    if n_idx == 1
+        legend('Numérico', 'Analítico');
+    end
 
-    % Subplot 2: Erro absoluto do deslocamento
-    subplot(3, 2, 2);
-    plot(x, erro_absoluto_u, '-g', 'LineWidth', 1.25);
-    grid on; 
-    xlabel('Posição x [m]'); 
-    ylabel('Erro Absoluto [m]');
-    title(sprintf('Norma L2: %.4e', normas_euclidianas_u(n_idx)));
+    subplot(3,2,2);
+    plot(x, erro_absolut, '-g', 'LineWidth', 1.25); 
+    title(sprintf('Norma L2: %.4e', erro_euclidiano1)); grid on;
+    xlabel('Posição x [m]'); ylabel('Erro Absoluto [m]'); hold on;
 
     % Deformação
-    % Subplot 3: Deformação - Comparação numérica e analítica
-    subplot(3, 2, 3);
-    plot(xc, def, 'x-k', x, dudx, 'y'); % Comparação numérica e analítica
-    grid on; 
-    xlabel('Posição x [m]'); 
-    ylabel('Deformação');
-    title(sprintf('%d elementos', nel));
-    legend('Numérico', 'Analítico');
-
-    % Subplot 4: Erro absoluto da deformação
-    subplot(3, 2, 4);
-    plot(x, erro_absoluto_def, '-g', 'LineWidth', 1.25);
-    grid on; 
-    xlabel('Posição x [m]'); 
-    ylabel('Erro Absoluto');
-    title(sprintf('Norma L2: %.3e', normas_euclidianas_def(n_idx)));
-
-    % Tensão
-    % Subplot 5: Tensão - Comparação numérica e analítica
-    subplot(3, 2, 5);
-    bar((xn(1:end-1) + xn(2:end)) / 2, Ten, 'FaceColor', 'k'); % Tensão numérica
-    grid on; 
-    hold on; 
-    plot(x, sigma, '-b');
-    xlabel('Posição [m]'); 
-    ylabel('Tensão [Pa]');
+    subplot(3,2,3);
+    plot(coord_mid, DEF, 'x-k', x, dudx, 'y'); hold on; grid on;
+    xlabel('Posição [m]'); ylabel('Deformação');
     title(sprintf('(%d elementos)', nel));
-    legend('Numérico', 'Analítico');
+    if n_idx == 1
+        legend('Numérico', 'Analítico');
+    end
 
-    % Subplot 6: Erro absoluto da tensão
-    subplot(3, 2, 6);
-    plot(x, erro_absoluto_ten, '-g', 'LineWidth', 1.25);
-    grid on; 
-    xlabel('Posição x [m]'); 
-    ylabel('Erro Absoluto [Pa]');
-    title(sprintf('Norma L2: %.3e', normas_euclidianas_ten(n_idx)));
+    subplot(3,2,4);
+    plot(x, erro_absolut3, '-g', 'LineWidth', 1.25); 
+    title(sprintf('Norma L2: %.4e', erro_euclidiano3)); grid on;
+    xlabel('Posição x [m]'); ylabel('Erro Absoluto');
+    hold off;
+    
+    % Tensão
+    subplot(3,2,5);
+    bar((coord(1:end-1) + coord(2:end)) / 2, T, 'FaceColor', 'k'); hold on;
+    plot(x, sxx, '-b'); grid on;
+    xlabel('Posição [m]'); ylabel('Tensão [Pa]');
+    title(sprintf('(%d elementos)', nel));
+    if n_idx == 1
+        legend('Numérico', 'Analítico');
+    end
 
-end
-
-%% Impressão dos erros euclidianos
-% Erros no deslocamento
-fprintf('Erros Euclidianos de Deslocamento:\n');
-for n_idx = 1:subplot_length
-    nel = nels(n_idx);
-    fprintf('Número de elementos: %d, Erro Euclidiano: %.10e\n', nel, normas_euclidianas_u(n_idx));
-end
-
-fprintf('%s\n', repmat('-', 1, 60));
-
-% Erros na deformação
-fprintf('Erros Euclidianos de Deformação:\n');
-for n_idx = 1:subplot_length
-    nel = nels(n_idx);
-    fprintf('Número de elementos: %d, Erro Euclidiano: %.10e\n', nel, normas_euclidianas_def(n_idx));
-end
-
-fprintf('%s\n', repmat('-', 1, 60));
-
-% Erros na tensão
-fprintf('Erros Euclidianos de Tensão:\n');
-for n_idx = 1:subplot_length
-    nel = nels(n_idx);
-    fprintf('Número de elementos: %d, Erro Euclidiano: %.10e\n', nel, normas_euclidianas_ten(n_idx));
+    subplot(3,2,6);
+    plot(x, erro_absolut2, '-g', 'LineWidth', 1.25); 
+    title(sprintf('Norma L2: %.4e', erro_euclidiano2)); grid on;
+    xlabel('Posição x [m]'); ylabel('Erro Absoluto [Pa]');
+    hold off;
 end

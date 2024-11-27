@@ -5,14 +5,14 @@ clc; clear all; close all;
 modos = 10;
 
 % Comprimentos dos galhos
-L1 = 0.3188;
-L2 = 0.2530;
-L3 = 0.2008;
-L4 = 0.1594;
-L5 = 0.1265;
-L6 = 0.1002;
-L7 = 0.07958;
-L8 = 0.06316;
+L1 = 6.8683;
+L2 = 5.4514;
+L3 = 4.3267;
+L4 = 3.4341;
+L5 = 2.7257;
+L6 = 2.1634;
+L7 = 1.7171;
+L8 = 1.3628;
 
 % Coordenadas dos nós
 coord = [1,   0,                       0;
@@ -533,14 +533,14 @@ inci = [1,  1,  1, 2;
 Tmat = [11.3e9 805 0.38];
 
 % Propriedades geométricas
-Tgeo = [pi*((0.18/2)^2)    (pi*((0.18/2)^4))/4     (pi*((0.18/2)^4))/4;
-        pi*((0.1273/2)^2)  (pi*((0.1273/2)^4))/4   (pi*((0.1273/2)^4))/4;
-        pi*((0.09/2)^2)    (pi*((0.09/2)^4))/4     (pi*((0.09/2)^4))/4;
-        pi*((0.0636/2)^2)  (pi*((0.0636/2)^4))/4   (pi*((0.0636/2)^4))/4;
-        pi*((0.045/2)^2)   (pi*((0.045/2)^4))/4    (pi*((0.045/2)^4))/4;
-        pi*((0.03175/2)^2) (pi*((0.03175/2)^4))/4  (pi*((0.03175/2)^4))/4;
-        pi*((0.02245/2)^2) (pi*((0.02245/2)^4))/4  (pi*((0.02245/2)^4))/4;
-        pi*((0.01587/2)^2) (pi*((0.01587/2)^4))/4  (pi*((0.01587/2)^4))/4];
+Tgeo = [pi*((18/2)^2)       (pi*((18/2)^4))/4;
+        pi*((12.7279/2)^2)  (pi*((12.7279/2)^4))/4;
+        pi*((9/2)^2)        (pi*((9/2)^4))/4;
+        pi*((6.3639/2)^2)   (pi*((6.3639/2)^4))/4;
+        pi*((4.5/2)^2)      (pi*((4.5/2)^4))/4;
+        pi*((3.1820/2)^2)   (pi*((3.1820/2)^4))/4;
+        pi*((2.245/2)^2)    (pi*((2.245/2)^4))/4;
+        pi*((1.591/2)^2)    (pi*((1.591/2)^4))/4];
 
 %% Inicialização de variáveis
 nnos = size(coord, 1);
@@ -616,116 +616,19 @@ for i = 1:nel
     
     % Matriz de massa
     me_por = (rho * A * h / 6) * [2 0 0 1 0 0;
-                                  0 2 0 0 1 0;
+                                  0 0 0 0 0 0;
                                   0 0 0 0 0 0;
                                   1 0 0 2 0 0;
-                                  0 1 0 0 2 0;
-                                  0 0 0 0 0 0];
-    
-    me_por = me_por + (rho * A * h / 420) * [0    0     0     0    0     0;
-                                             0   156   22*h   0   54   -13*h;
-                                             0   22*h 4*h^2   0  13*h  -3*h^2;
-                                             0    0     0     0    0     0;
-                                             0   54    13*h   0   156  -22*h;
-                                             0  -13*h -3*h^2  0  -22*h  4*h^2];
-                         
-    me = T' * me_por * T;
-
-    % Montagem das matrizes globais
-    K(loc, loc) = K(loc, loc) + ke;
-    M(loc, loc) = M(loc, loc) + me;
-end
-
-%% Condições de contorno
-AllDofs = 1:3*nnos;
-FixedDofs = [1 2 3];
-FreeDofs = setdiff(AllDofs, FixedDofs);%% Inicialização de variáveis
-nnos = size(coord, 1);
-nel = size(inci, 1);
-
-% Matrizes de rigidez e massa para cada elemento
-ke_bar = zeros(6,6);
-ke_viga = zeros(6,6);
-ke = zeros(6,6);
-me_por = zeros(6,6);
-me = zeros(6,6);
-
-% Matrizes globais de rigidez e massa
-K = zeros(3*nnos, 3*nnos);
-M = zeros(3*nnos, 3*nnos);
-
-% Vetor de deslocamentos
-u = zeros(3*nnos, 1);
-
-%% Loop sobre os elementos
-for i = 1:nel
-    % Identificação dos nós do elemento
-    no1 = inci(i, 3);
-    no2 = inci(i, 4);
-
-    % Coordenadas dos nós
-    x1 = coord(no1, 2);
-    y1 = coord(no1, 3);
-    x2 = coord(no2, 2);
-    y2 = coord(no2, 3);
-
-    % Cálculo do comprimento e ângulos
-    h = sqrt((x2 - x1)^2 + (y2 - y1)^2);
-    c = (x2 - x1) / h;
-    s = (y2 - y1) / h;
-
-    % Propriedades do material e geometria
-    E = Tmat(inci(i, 1), 1);
-    A = Tgeo(inci(i, 2), 1);
-    Izz = Tgeo(inci(i, 2), 2);
-    rho = Tmat(inci(i, 1), 2);
-
-    % Localização dos graus de liberdade
-    loc = [3*no1-2 3*no1-1 3*no1 3*no2-2 3*no2-1 3*no2];
-
-    % Matriz de transformação
-    T = [c  s  0  0  0 0;
-        -s  c  0  0  0 0;
-         0  0  1  0  0 0;
-         0  0  0  c  s 0;
-         0  0  0 -s  c 0;
-         0  0  0  0  0 1];
-
-    % Matriz de rigidez axial
-    ke_bar = (E * A / h) * [1 0 0 -1 0 0;
-                            0 0 0  0 0 0;
-                            0 0 0  0 0 0;
-                           -1 0 0  1 0 0;
-                            0 0 0  0 0 0;
-                            0 0 0  0 0 0];
-
-    % Matriz de rigidez da viga
-    ke_viga = (E * Izz / h^3) * [0   0     0    0    0     0;
-                                 0  12    6*h   0   -12    6*h;
-                                 0  6*h  4*h^2  0  -6*h  2*h^2;
-                                 0   0     0    0    0     0;
-                                 0  -12  -6*h   0   12   -6*h;
-                                 0  6*h  2*h^2  0  -6*h  4*h^2];
-
-    % Matriz de rigidez do elemento
-    ke_por = ke_bar + ke_viga;
-    ke = T' * ke_por * T;
-    
-    % Matriz de massa
-    me_por = (rho * A * h / 6) * [2 0 0 1 0 0;
-                                  0 2 0 0 1 0;
                                   0 0 0 0 0 0;
-                                  1 0 0 2 0 0;
-                                  0 1 0 0 2 0;
                                   0 0 0 0 0 0];
     
-    me_por = me_por + (rho * A * h / 420) * [0    0     0     0    0     0;
-                                             0   156   22*h   0   54   -13*h;
-                                             0   22*h 4*h^2   0  13*h  -3*h^2;
-                                             0    0     0     0    0     0;
-                                             0   54    13*h   0   156  -22*h;
-                                             0  -13*h -3*h^2  0  -22*h  4*h^2];
-                         
+    me_por = me_por + (rho * A * h / 420) * [0    0    0     0     0     0;
+                                             0  156  22*h    0    54   -13*h;
+                                             0 22*h  4*h^2   0   13*h  -3*h^2;
+                                             0    0    0     0     0     0;
+                                             0   54  13*h    0   156   -22*h;
+                                             0 -13*h -3*h^2  0  -22*h   4*h^2];
+
     me = T' * me_por * T;
 
     % Montagem das matrizes globais
@@ -746,7 +649,6 @@ omeg = sqrt(D) / (2 * pi);
 
 % Configura a janela da figura para tela cheia para os modos de vibração
 figure(1);
-set(gcf, 'WindowState', 'maximized');
 
 % Determina os limites da estrutura para a escala
 xmax = max(coord(:, 2));
@@ -755,36 +657,25 @@ xmin = min(coord(:, 2));
 ymin = min(coord(:, 3));
 Lscale = max((xmax - xmin), (ymax - ymin));
 
-% Parâmetros de animação
-numFrames = 40;
-
 % Loop para plotar os modos escolhidos
 for modo = 1:modos
     subplot(2, ceil(modos/2), modo);
-    
-    % Cálculo da escala e da coordenada deslocada
-    scale = (Lscale * 0.5) / max(abs(V(:, modo)));
+    scale = (Lscale * 0.1) / max(abs(V(:, modo)));
     coord_deslocada = coord + [zeros(nnos, 1), V(1:3:3*nnos-1, modo), V(2:3:3*nnos, modo)] * scale;
-
-    % Animação da deformação
-    for frame = 1:numFrames
-        % Interpolação entre a malha original e a deformada
-        alpha = frame / numFrames;
-        coord_atual = coord + alpha * (coord_deslocada - coord);
-        
-        % Plotagem da estrutura original e deformada
-        cla; index = 1; plotMalha(coord, inci, index, coord_atual);
-                
-        % Configura título e exibe a frequência
-        title(['(Modo: ', num2str(modo), ' - Frequência: ', num2str(omeg(modo), '%.3f'), ' Hz)']);
-        
-        % Adicionar legenda
-        if modo == 1 && frame == 1
-            annotation('textbox', [0.5, 0.01, 0.3, 0.05], ...
-                       'String', 'Malha Original: preto, Malha Deformada: vermelho', ...
-                       'FitBoxToText', 'on');
-        end
-        
-        pause(0.02);
-    end
+    
+    % Plotagem da estrutura deformada e original
+    index = 1;
+    plotMalha(coord, inci, index, coord_deslocada);
+    title(['Modo: ', num2str(modo), ' - Frequência: ', num2str(omeg(modo), '%.3f'), 'Hz']);
 end
+
+%% Visualização da estrutura
+figure(2); clf;
+plotMalha(coord, inci, 0, coord);
+title('Estrutura da Árvore');
+
+%% Plotagem das frequências modais ao longo dos modos
+figure(3);
+plot(1:modos, omeg, 'o', 'LineWidth', 1.5);
+xlabel('Modo'); ylabel('Frequência [Hz]');
+title('Frequências Modais'); grid on;

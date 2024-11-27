@@ -1,8 +1,4 @@
-% ========================================================================
-% Solução do item 4.1 - Solução analítica para uma barra com seção variável
-% ========================================================================
-
-close all; clear all; clc;
+close all; clear all;
 
 %% Parâmetros de entrada
 L = 10;                  % Comprimento da barra [m]
